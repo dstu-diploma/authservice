@@ -59,7 +59,7 @@ async def generate_access_token(user_id: int, refresh_token: str):
     if not is_valid:
         raise HTTPException(
             status_code=401,
-            detail="Refresh token is invalid! Please generate new pair",
+            detail="Refresh token is invalid! Please generate a new one",
         )
     elif refresh_payload.user_id != user_id:
         raise HTTPException(
