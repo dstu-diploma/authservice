@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from .dto import JWTPayloadDto, UserJWTDto
+from .dto import AccessJWTPayloadDto, RefreshJWTPayloadDto, UserJWTDto
 from jose import ExpiredSignatureError, JWTError, jwt
 from app.models.user_tokens import UserTokensModel
 from datetime import datetime, timedelta
@@ -23,7 +23,7 @@ async def generate_refresh_token(user_id: int, role: str):
     user = await get_user_by_id(user_id)
     await user.increase_revision()
 
-    payload = JWTPayloadDto(
+    payload = RefreshJWTPayloadDto(
         user_id=user_id,
         role=role,
         token_revision=user.token_revision,
@@ -40,7 +40,7 @@ async def generate_refresh_token(user_id: int, role: str):
 async def validate_refresh_token(token: str):
     try:
         raw_payload = jwt.decode(token, JWT_SECRET)
-        payload = JWTPayloadDto(**raw_payload)
+        payload = RefreshJWTPayloadDto(**raw_payload)
         user = await get_user_by_id(payload.user_id)
 
         return user.verify_revision(payload.token_revision), payload
@@ -67,8 +67,11 @@ async def generate_access_token(user_id: int, refresh_token: str):
             detail="This token is owned by another user!",
         )
 
-    payload = refresh_payload.model_copy()
-    payload.exp = datetime.now() + timedelta(minutes=10)
+    payload = AccessJWTPayloadDto(
+        user_id=refresh_payload.user_id,
+        role=refresh_payload.role,
+        exp=datetime.now() + timedelta(minutes=10),
+    )
 
     return jwt.encode(
         payload.model_dump(),

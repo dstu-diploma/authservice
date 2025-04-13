@@ -2,11 +2,14 @@ from pydantic import BaseModel
 from datetime import datetime
 
 
-class JWTPayloadDto(BaseModel):
+class AccessJWTPayloadDto(BaseModel):
     user_id: int
-    token_revision: int
     role: str
     exp: datetime
+
+
+class RefreshJWTPayloadDto(AccessJWTPayloadDto):
+    token_revision: int
 
 
 class UserJWTDto(BaseModel):
